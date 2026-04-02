@@ -3,26 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Cartões - Cloud Final</title>
+    <title>Dashboard Cartões - Cloud</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root{--bg:#0d0f14;--surface:#161921;--surface2:#1e2230;--border:#2a2f3d;--accent:#4f8ef7;--accent2:#38d9a9;--danger:#ff6b6b;--warn:#ffd43b;--text:#e8eaf0;--text2:#8b93a8;--green:#51cf66;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
         *{box-sizing:border-box;margin:0;padding:0;}
         body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
-
-        /* Telas */
         #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
         .login-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:40px;width:360px;text-align:center;}
         .login-field{margin-bottom:14px;text-align:left;}
         .login-field label{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:5px;text-transform:uppercase;}
         .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:10px;outline:none;border:1px solid transparent;}
-        .login-field input:focus{border-color:var(--accent);}
         .login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-weight:600;cursor:pointer;}
-
         #adminScreen, #appHeader, #appMain { display: none; }
-
-        /* Dashboard */
         header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
         .controls{padding:20px; display:flex; gap:10px; align-items:center;}
         .sheet-wrap{margin:0 20px; background:var(--surface); border:1px solid var(--border); border-radius:11px; overflow:hidden;}
@@ -32,12 +26,10 @@
         .rh{background:var(--surface2); font-size:11px; color:var(--text2); width:50px;}
         .ch{background:var(--surface2); font-size:10px; text-transform:uppercase; color:var(--text2); min-width:110px;}
         .ic input{width:100%; background:transparent; border:none; color:white; text-align:right; font-family:var(--mono); outline:none;}
-        
         .btn{padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-weight:600; font-size:12px;}
         .btn-add{background:var(--green); color:#000;}
         .btn-del{background:var(--danger); color:#fff;}
         .btn-save{background:var(--accent); color:#fff; margin-left:auto;}
-        
         .footer-names{background:var(--surface2); font-weight:bold; font-size:9px; color:var(--accent2);}
         .total-row{background:rgba(79, 142, 247, 0.1); font-weight:bold;}
     </style>
@@ -46,39 +38,34 @@
 
 <div id="loginScreen">
     <div class="login-box">
-        <div style="font-size:40px; margin-bottom:10px;">⛽</div>
-        <h2>Sistema de Cartões</h2>
-        <p style="font-size:12px; color:var(--text2); margin-bottom:20px;">Digite suas credenciais</p>
-        <div class="login-field"><label>E-mail / Usuário</label><input type="text" id="loginUser" placeholder="ex: posto1@email.com"></div>
-        <div class="login-field"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••"></div>
-        <button class="login-btn" onclick="doLogin()">Entrar no Sistema</button>
+        <h2>Acesso Postos</h2>
+        <div class="login-field"><label>E-mail</label><input type="text" id="loginUser" placeholder="admin ou posto@email.com"></div>
+        <div class="login-field"><label>Senha</label><input type="password" id="loginPass"></div>
+        <button class="login-btn" onclick="doLogin()">Entrar</button>
     </div>
 </div>
 
 <div id="adminScreen" style="padding:40px;">
-    <div style="max-width:600px; margin:auto; background:var(--surface); padding:30px; border-radius:15px; border:1px solid var(--border);">
-        <h2>⚙️ Painel Administrativo</h2>
-        <p style="color:var(--text2); margin-bottom:20px;">Cadastre novos postos abaixo:</p>
+    <div style="max-width:500px; margin:auto; background:var(--surface); padding:30px; border-radius:15px;">
+        <h2>⚙️ Painel Admin</h2>
         <div class="login-field"><label>Novo E-mail</label><input type="text" id="newEmail"></div>
         <div class="login-field"><label>Nova Senha</label><input type="password" id="newPass"></div>
-        <button class="btn btn-add" style="width:100%; padding:12px;" onclick="adminCreateUser()">Criar Acesso Posto</button>
-        <hr style="margin:20px 0; border:0; border-top:1px solid var(--border);">
-        <button class="btn btn-del" onclick="location.reload()">Sair do Painel</button>
+        <button class="btn btn-add" style="width:100%" onclick="adminCreateUser()">Cadastrar Posto</button>
+        <button class="btn btn-del" style="margin-top:10px" onclick="location.reload()">Sair</button>
     </div>
 </div>
 
 <header id="appHeader">
-    <h1 style="font-size:18px;">⛽ Dashboard Cloud - <span id="userNameLabel">Posto</span></h1>
+    <h1>⛽ Dash Cartões - <span id="userLabel"></span></h1>
     <button class="btn btn-del" onclick="location.reload()">Sair</button>
 </header>
 
 <main id="appMain">
     <div class="controls">
-        <button class="btn btn-add" onclick="addRow()">+ Adicionar Linha</button>
-        <button class="btn btn-del" onclick="removeRow()">x Remover Linha</button>
-        <button class="btn btn-save" onclick="syncSave()">💾 SALVAR NA NUVEM</button>
+        <button class="btn btn-add" onclick="addRow()">+ Linha</button>
+        <button class="btn btn-del" onclick="removeRow()">x Remover</button>
+        <button class="btn btn-save" onclick="syncSave()">💾 SALVAR NUVEM</button>
     </div>
-
     <div class="sheet-wrap">
         <div class="sheet-scroll">
             <table class="sheet-table">
@@ -91,38 +78,30 @@
 </main>
 
 <script>
-// --- CONFIGURAÇÃO SUPABASE ---
-const SUPABASE_URL = 'https://hphntpplzvwktwxrnpfm.supabase.co'; 
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwaG50cHBsenZ3a3R3eHJucGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMzkxMzEsImV4cCI6MjA5MDcxNTEzMX0.gXAn0zKRWucLLaBcXj1mOaKfG_9jJeCnnxIByHoURI4';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// --- CONFIGURAÇÃO ---
+const S_URL = 'https://hphntpplzvwktwxrnpfm.supabase.co'; 
+const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwaG50cHBsenZ3a3R3eHJucGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMzkxMzEsImV4cCI6MjA5MDcxNTEzMX0.gXAn0zKRWucLLaBcXj1mOaKfG_9jJeCnnxIByHoURI4';
+const sb = supabase.createClient(S_URL, S_KEY);
 
 let currentUser = null;
 const BANDEIRAS=['Elo Crédito','Elo Débito','Maestro','Mastercard','Visa Crédito','Visa Electron','American/PIX','Gasola','Goodcard','Alelo','Vale Card','eFleet/X7','Truckpag','Rede Frota','Expers','Brasil Card','Vegas'];
 
-// --- FUNÇÃO DE LOGIN ---
+// --- AUTENTICAÇÃO ---
 async function doLogin() {
-    const user = document.getElementById('loginUser').value.trim();
+    const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
 
-    if(!user || !pass) return alert("Preencha todos os campos");
-
-    // Login Master Local
     if(user === 'admin' && pass === 'Brandao123') {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminScreen').style.display = 'block';
         return;
     }
 
-    // Login Supabase
     const { data, error } = await sb.auth.signInWithPassword({ email: user, password: pass });
-    
-    if (error) {
-        alert("Erro: " + error.message);
-        return;
-    }
+    if (error) return alert("Erro: " + error.message);
 
     currentUser = data.user;
-    document.getElementById('userNameLabel').textContent = user;
+    document.getElementById('userLabel').textContent = user;
     showApp();
 }
 
@@ -134,7 +113,7 @@ function showApp() {
     loadFromCloud();
 }
 
-// --- LOGICA DA TABELA ---
+// --- FUNÇÕES DA TABELA ---
 function renderHeader() {
     let h = '<tr><th class="rh">#</th>';
     BANDEIRAS.forEach(b => h += `<th class="ch">${b}</th>`);
@@ -143,9 +122,8 @@ function renderHeader() {
 
 function addRow(values = null) {
     const body = document.getElementById('sheetBody');
-    const rowIdx = body.children.length + 1;
     const tr = document.createElement('tr');
-    let h = `<td class="rh">${rowIdx}</td>`;
+    let h = `<td class="rh">${body.children.length + 1}</td>`;
     BANDEIRAS.forEach((_, i) => {
         const val = values ? values[i] : '';
         h += `<td class="ic"><input type="text" data-col="${i}" value="${val}" oninput="calcTotals()"></td>`;
@@ -157,20 +135,15 @@ function addRow(values = null) {
 
 function removeRow() {
     const body = document.getElementById('sheetBody');
-    if(body.children.length > 1) {
-        body.removeChild(body.lastChild);
-        renderFooter();
-    }
+    if(body.children.length > 1) { body.removeChild(body.lastChild); renderFooter(); }
 }
 
 function renderFooter() {
     const foot = document.getElementById('sheetFoot');
     let hNames = '<tr class="footer-names"><td class="rh">Nomes</td>';
     BANDEIRAS.forEach(b => hNames += `<td>${b}</td>`);
-    
     let hTotals = '<tr class="total-row"><td class="rh">TOTAL</td>';
     BANDEIRAS.forEach((_, i) => hTotals += `<td><input type="text" id="total-${i}" readonly style="width:100%; border:none; background:transparent; color:var(--accent2); text-align:right; font-weight:bold;"></td>`);
-    
     foot.innerHTML = hNames + '</tr>' + hTotals + '</tr>';
     calcTotals();
 }
@@ -187,13 +160,12 @@ function calcTotals() {
     });
 }
 
-// --- FUNÇÕES DE NUVEM ---
+// --- NUVEM ---
 async function adminCreateUser() {
     const email = document.getElementById('newEmail').value;
     const password = document.getElementById('newPass').value;
     const { error } = await sb.auth.signUp({ email, password });
-    if (error) alert("Erro: " + error.message);
-    else alert("Posto cadastrado! O login agora está ativo.");
+    alert(error ? "Erro: " + error.message : "Posto cadastrado!");
 }
 
 async function syncSave() {
@@ -203,28 +175,16 @@ async function syncSave() {
         tr.querySelectorAll('input').forEach(i => rowData.push(i.value));
         rows.push(rowData);
     });
-
-    const { error } = await sb.from('dados_postos').upsert({ 
-        user_id: currentUser.id, 
-        tipo_dado: 'calculadora', 
-        conteudo: rows 
-    }, { onConflict: 'user_id, tipo_dado' });
-
-    alert(error ? "Erro ao salvar" : "✅ Sincronizado com sucesso!");
+    const { error } = await sb.from('dados_postos').upsert({ user_id: currentUser.id, tipo_dado: 'calculadora', conteudo: rows }, { onConflict: 'user_id, tipo_dado' });
+    alert(error ? "Erro ao salvar" : "✅ Sincronizado!");
 }
 
 async function loadFromCloud() {
-    const { data, error } = await sb.from('dados_postos').select('conteudo')
-        .eq('user_id', currentUser.id).eq('tipo_dado', 'calculadora').single();
-
+    const { data } = await sb.from('dados_postos').select('conteudo').eq('user_id', currentUser.id).eq('tipo_dado', 'calculadora').single();
     const body = document.getElementById('sheetBody');
     body.innerHTML = "";
-    
-    if (data && data.conteudo) {
-        data.conteudo.forEach(rowData => addRow(rowData));
-    } else {
-        for(let i=0; i<8; i++) addRow();
-    }
+    if (data && data.conteudo) data.conteudo.forEach(rowData => addRow(rowData));
+    else for(let i=0; i<5; i++) addRow();
 }
 </script>
 </body>
