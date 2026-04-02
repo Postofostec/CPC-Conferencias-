@@ -3,188 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Cartões - Cloud</title>
+    <title>Dashboard Cartões Pro - Cloud</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root{--bg:#0d0f14;--surface:#161921;--surface2:#1e2230;--border:#2a2f3d;--accent:#4f8ef7;--accent2:#38d9a9;--danger:#ff6b6b;--warn:#ffd43b;--text:#e8eaf0;--text2:#8b93a8;--green:#51cf66;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
         *{box-sizing:border-box;margin:0;padding:0;}
-        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
-        #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+        
+        /* LOGIN */
+        #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;align-items:center;justify-content:center;}
         .login-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:40px;width:360px;text-align:center;}
         .login-field{margin-bottom:14px;text-align:left;}
         .login-field label{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:5px;text-transform:uppercase;}
-        .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:10px;outline:none;border:1px solid transparent;}
+        .login-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:10px;outline:none;}
         .login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-weight:600;cursor:pointer;}
-        #adminScreen, #appHeader, #appMain { display: none; }
-        header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-        .controls{padding:20px; display:flex; gap:10px; align-items:center;}
-        .sheet-wrap{margin:0 20px; background:var(--surface); border:1px solid var(--border); border-radius:11px; overflow:hidden;}
+
+        /* HEADER & TABS */
+        header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;sticky;top:0;z-index:100;}
+        .tabs{display:flex;gap:5px;background:var(--surface2);padding:4px;border-radius:10px;}
+        .tab{padding:8px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);border:none;background:none;transition:0.2s;}
+        .tab.active{background:var(--accent);color:#fff;}
+        
+        /* ESTRUTURA TABELAS */
+        .page{display:none;padding:20px;} .page.active{display:block;}
+        .sheet-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;}
         .sheet-scroll{overflow-x:auto;}
-        .sheet-table{border-collapse:collapse; width:max-content; min-width:100%;}
-        .sheet-table th, .sheet-table td{border:1px solid var(--border); padding:8px; text-align:center;}
-        .rh{background:var(--surface2); font-size:11px; color:var(--text2); width:50px;}
-        .ch{background:var(--surface2); font-size:10px; text-transform:uppercase; color:var(--text2); min-width:110px;}
-        .ic input{width:100%; background:transparent; border:none; color:white; text-align:right; font-family:var(--mono); outline:none;}
-        .btn{padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-weight:600; font-size:12px;}
-        .btn-add{background:var(--green); color:#000;}
-        .btn-del{background:var(--danger); color:#fff;}
-        .btn-save{background:var(--accent); color:#fff; margin-left:auto;}
-        .footer-names{background:var(--surface2); font-weight:bold; font-size:9px; color:var(--accent2);}
-        .total-row{background:rgba(79, 142, 247, 0.1); font-weight:bold;}
+        table{border-collapse:collapse;width:max-content;min-width:100%;}
+        th,td{border:1px solid var(--border);padding:8px;text-align:center;}
+        .rh{background:var(--surface2);color:var(--text2);font-size:11px;width:50px;}
+        .ch{background:var(--surface2);color:var(--text2);font-size:10px;text-transform:uppercase;min-width:110px;}
+        input{width:100%;background:transparent;border:none;color:white;text-align:right;font-family:var(--mono);outline:none;}
+        
+        /* TOTAIS E DIFERENÇAS */
+        .total-row{background:rgba(79, 142, 247, 0.05);font-weight:bold;}
+        .diff-row{background:rgba(255, 107, 107, 0.05);color:var(--danger);}
+        .diff-row.ok{color:var(--green);}
+
+        .btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:12px;transition:0.2s;}
+        .btn-add{background:var(--green);color:#000;margin-bottom:10px;}
+        .btn-save{background:var(--accent);color:#fff;position:fixed;bottom:20px;right:20px;box-shadow:0 4px 15px rgba(0,0,0,0.4);z-index:99;}
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
     <div class="login-box">
-        <h2>Acesso Postos</h2>
-        <div class="login-field"><label>E-mail</label><input type="text" id="loginUser" placeholder="admin ou posto@email.com"></div>
+        <h2>Posto Login</h2>
+        <div class="login-field"><label>E-mail</label><input type="text" id="loginUser"></div>
         <div class="login-field"><label>Senha</label><input type="password" id="loginPass"></div>
-        <button class="login-btn" onclick="doLogin()">Entrar</button>
+        <button class="login-btn" onclick="doLogin()">Acessar Painel</button>
     </div>
 </div>
 
-<div id="adminScreen" style="padding:40px;">
-    <div style="max-width:500px; margin:auto; background:var(--surface); padding:30px; border-radius:15px;">
-        <h2>⚙️ Painel Admin</h2>
-        <div class="login-field"><label>Novo E-mail</label><input type="text" id="newEmail"></div>
-        <div class="login-field"><label>Nova Senha</label><input type="password" id="newPass"></div>
-        <button class="btn btn-add" style="width:100%" onclick="adminCreateUser()">Cadastrar Posto</button>
-        <button class="btn btn-del" style="margin-top:10px" onclick="location.reload()">Sair</button>
+<header id="appHeader" style="display:none">
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('conferencia',this)">📊 Conferência</button>
+        <button class="tab" onclick="switchTab('pendencias',this)">⚠️ Pendências</button>
+        <button class="tab" onclick="switchTab('clientes',this)">💳 Clientes</button>
     </div>
-</div>
-
-<header id="appHeader">
-    <h1>⛽ Dash Cartões - <span id="userLabel"></span></h1>
-    <button class="btn btn-del" onclick="location.reload()">Sair</button>
+    <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="location.reload()">Sair</button>
 </header>
 
-<main id="appMain">
-    <div class="controls">
-        <button class="btn btn-add" onclick="addRow()">+ Linha</button>
-        <button class="btn btn-del" onclick="removeRow()">x Remover</button>
-        <button class="btn btn-save" onclick="syncSave()">💾 SALVAR NUVEM</button>
-    </div>
-    <div class="sheet-wrap">
-        <div class="sheet-scroll">
-            <table class="sheet-table">
-                <thead id="sheetHead"></thead>
-                <tbody id="sheetBody"></tbody>
-                <tfoot id="sheetFoot"></tfoot>
-            </table>
+<main id="appMain" style="display:none">
+    <button class="btn btn-save" onclick="syncSave()">💾 SALVAR TUDO NA NUVEM</button>
+
+    <section id="page-conferencia" class="page active">
+        <button class="btn btn-add" onclick="addRow('bodyConferencia')">+ Adicionar Linha</button>
+        <div class="sheet-wrap">
+            <div class="sheet-scroll">
+                <table id="tblConferencia">
+                    <thead><tr id="headConferencia"></tr></thead>
+                    <tbody id="bodyConferencia"></tbody>
+                    <tfoot id="footConferencia"></tfoot>
+                </table>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <section id="page-pendencias" class="page">
+        <h3>Sacados / Notas Fiscais</h3>
+        <button class="btn btn-add" onclick="addRow('bodySacados', 4)">+ Novo Sacado</button>
+        <div class="sheet-wrap"><div class="sheet-scroll"><table>
+            <thead><tr><th class="ch">Data</th><th class="ch">Sacado</th><th class="ch">Valor</th><th class="ch">Status</th></tr></thead>
+            <tbody id="bodySacados"></tbody>
+        </table></div></div>
+    </section>
+
+    <section id="page-clientes" class="page">
+        <h3>Controle de Clientes / Crédito</h3>
+        <button class="btn btn-add" onclick="addRow('bodyClientes', 3)">+ Novo Cliente</button>
+        <div class="sheet-wrap"><div class="sheet-scroll"><table>
+            <thead><tr><th class="ch">Nome Cliente</th><th class="ch">Crédito Total</th><th class="ch">Saldo Devedor</th></tr></thead>
+            <tbody id="bodyClientes"></tbody>
+        </table></div></div>
+    </section>
 </main>
 
 <script>
-// --- CONFIGURAÇÃO ---
+// --- CONFIGURAÇÃO SUPABASE ---
 const S_URL = 'https://hphntpplzvwktwxrnpfm.supabase.co'; 
 const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwaG50cHBsenZ3a3R3eHJucGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMzkxMzEsImV4cCI6MjA5MDcxNTEzMX0.gXAn0zKRWucLLaBcXj1mOaKfG_9jJeCnnxIByHoURI4';
 const sb = supabase.createClient(S_URL, S_KEY);
 
 let currentUser = null;
-const BANDEIRAS=['Elo Crédito','Elo Débito','Maestro','Mastercard','Visa Crédito','Visa Electron','American/PIX','Gasola','Goodcard','Alelo','Vale Card','eFleet/X7','Truckpag','Rede Frota','Expers','Brasil Card','Vegas'];
+const BANDEIRAS = ['Elo Crédito','Elo Débito','Maestro','Mastercard','Visa Crédito','Visa Electron','Amex/PIX','Gasola','Goodcard','Alelo','Vale Card','eFleet','Truckpag','Rede Frota','Expers','Brasil Card','Vegas'];
 
-// --- AUTENTICAÇÃO ---
 async function doLogin() {
     const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
-
-    if(user === 'admin' && pass === 'Brandao123') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminScreen').style.display = 'block';
-        return;
-    }
-
     const { data, error } = await sb.auth.signInWithPassword({ email: user, password: pass });
-    if (error) return alert("Erro: " + error.message);
-
+    if (error) return alert("Erro de acesso.");
     currentUser = data.user;
-    document.getElementById('userLabel').textContent = user;
-    showApp();
+    initApp();
 }
 
-function showApp() {
+function initApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appHeader').style.display = 'flex';
     document.getElementById('appMain').style.display = 'block';
-    renderHeader();
+    renderConferenciaHeader();
     loadFromCloud();
 }
 
-// --- FUNÇÕES DA TABELA ---
-function renderHeader() {
-    let h = '<tr><th class="rh">#</th>';
-    BANDEIRAS.forEach(b => h += `<th class="ch">${b}</th>`);
-    document.getElementById('sheetHead').innerHTML = h + '</tr>';
+function switchTab(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    btn.classList.add('active');
 }
 
-function addRow(values = null) {
-    const body = document.getElementById('sheetBody');
+// --- LOGICA DA TABELA CONFERÊNCIA ---
+function renderConferenciaHeader() {
+    let h = '<th class="rh">#</th>';
+    BANDEIRAS.forEach(b => h += `<th class="ch">${b}</th>`);
+    document.getElementById('headConferencia').innerHTML = h;
+}
+
+function addRow(targetId, cols = BANDEIRAS.length, values = null) {
+    const body = document.getElementById(targetId);
     const tr = document.createElement('tr');
     let h = `<td class="rh">${body.children.length + 1}</td>`;
-    BANDEIRAS.forEach((_, i) => {
+    for(let i=0; i<cols; i++) {
         const val = values ? values[i] : '';
-        h += `<td class="ic"><input type="text" data-col="${i}" value="${val}" oninput="calcTotals()"></td>`;
-    });
+        h += `<td><input type="text" data-col="${i}" value="${val}" oninput="calcAll()"></td>`;
+    }
     tr.innerHTML = h;
     body.appendChild(tr);
-    renderFooter();
+    if(targetId === 'bodyConferencia') renderConferenciaFooter();
 }
 
-function removeRow() {
-    const body = document.getElementById('sheetBody');
-    if(body.children.length > 1) { body.removeChild(body.lastChild); renderFooter(); }
+function renderConferenciaFooter() {
+    const foot = document.getElementById('footConferencia');
+    let hNames = '<tr style="background:var(--surface2)"><td class="rh">Bandeiras</td>';
+    BANDEIRAS.forEach(b => hNames += `<td style="font-size:9px;color:var(--accent2)">${b}</td>`);
+    
+    let hSist = '<tr class="total-row"><td class="rh">SISTEMA</td>';
+    BANDEIRAS.forEach((_, i) => hSist += `<td><input type="text" id="sist-${i}" oninput="calcAll()" placeholder="0,00" style="color:var(--warn)"></td>`);
+    
+    let hCaixa = '<tr class="total-row"><td class="rh">CAIXAS</td>';
+    BANDEIRAS.forEach((_, i) => hCaixa += `<td><input type="text" id="total-caixa-${i}" readonly style="color:var(--accent)"></td>`);
+    
+    let hDiff = '<tr id="rowDiff" class="diff-row"><td class="rh">DIFERENÇA</td>';
+    BANDEIRAS.forEach((_, i) => hDiff += `<td><input type="text" id="diff-${i}" readonly></td>`);
+    
+    foot.innerHTML = hNames + '</tr>' + hSist + '</tr>' + hCaixa + '</tr>' + hDiff + '</tr>';
+    calcAll();
 }
 
-function renderFooter() {
-    const foot = document.getElementById('sheetFoot');
-    let hNames = '<tr class="footer-names"><td class="rh">Nomes</td>';
-    BANDEIRAS.forEach(b => hNames += `<td>${b}</td>`);
-    let hTotals = '<tr class="total-row"><td class="rh">TOTAL</td>';
-    BANDEIRAS.forEach((_, i) => hTotals += `<td><input type="text" id="total-${i}" readonly style="width:100%; border:none; background:transparent; color:var(--accent2); text-align:right; font-weight:bold;"></td>`);
-    foot.innerHTML = hNames + '</tr>' + hTotals + '</tr>';
-    calcTotals();
-}
-
-function calcTotals() {
-    BANDEIRAS.forEach((_, colIdx) => {
-        let sum = 0;
-        document.querySelectorAll(`#sheetBody input[data-col="${colIdx}"]`).forEach(input => {
-            let v = input.value.replace(/\./g, '').replace(',','.');
-            sum += parseFloat(v) || 0;
+function calcAll() {
+    BANDEIRAS.forEach((_, i) => {
+        let somaCaixas = 0;
+        document.querySelectorAll(`#bodyConferencia input[data-col="${i}"]`).forEach(input => {
+            somaCaixas += parseFloat(input.value.replace(',','.')) || 0;
         });
-        const out = document.getElementById(`total-${colIdx}`);
-        if(out) out.value = sum.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        
+        const sistVal = parseFloat(document.getElementById(`sist-${i}`)?.value.replace(',','.')) || 0;
+        const totalCaixaEl = document.getElementById(`total-caixa-${i}`);
+        const diffEl = document.getElementById(`diff-${i}`);
+        
+        if(totalCaixaEl) totalCaixaEl.value = somaCaixas.toLocaleString('pt-BR', {minimumFractionDigits:2});
+        
+        if(diffEl) {
+            const diff = somaCaixas - sistVal;
+            diffEl.value = diff.toLocaleString('pt-BR', {minimumFractionDigits:2});
+            diffEl.style.color = Math.abs(diff) < 0.01 ? 'var(--green)' : 'var(--danger)';
+        }
     });
 }
 
-// --- NUVEM ---
-async function adminCreateUser() {
-    const email = document.getElementById('newEmail').value;
-    const password = document.getElementById('newPass').value;
-    const { error } = await sb.auth.signUp({ email, password });
-    alert(error ? "Erro: " + error.message : "Posto cadastrado!");
-}
-
+// --- NUVEM (SALVA TUDO) ---
 async function syncSave() {
-    const rows = [];
-    document.querySelectorAll('#sheetBody tr').forEach(tr => {
-        const rowData = [];
-        tr.querySelectorAll('input').forEach(i => rowData.push(i.value));
-        rows.push(rowData);
-    });
-    const { error } = await sb.from('dados_postos').upsert({ user_id: currentUser.id, tipo_dado: 'calculadora', conteudo: rows }, { onConflict: 'user_id, tipo_dado' });
-    alert(error ? "Erro ao salvar" : "✅ Sincronizado!");
+    const payload = {
+        conferencia: captureTable('bodyConferencia'),
+        sistema: captureInputs('sist-'),
+        sacados: captureTable('bodySacados'),
+        clientes: captureTable('bodyClientes')
+    };
+
+    const { error } = await sb.from('dados_postos').upsert({
+        user_id: currentUser.id,
+        tipo_dado: 'full_dashboard',
+        conteudo: payload
+    }, { onConflict: 'user_id, tipo_dado' });
+
+    alert(error ? "Erro ao salvar" : "✅ Dashboard sincronizado com sucesso!");
+}
+
+function captureTable(id) {
+    return Array.from(document.querySelectorAll(`#${id} tr`)).map(tr => 
+        Array.from(tr.querySelectorAll('input')).map(i => i.value)
+    );
+}
+
+function captureInputs(prefix) {
+    const vals = [];
+    for(let i=0; i<BANDEIRAS.length; i++) {
+        vals.push(document.getElementById(prefix+i)?.value || '');
+    }
+    return vals;
 }
 
 async function loadFromCloud() {
-    const { data } = await sb.from('dados_postos').select('conteudo').eq('user_id', currentUser.id).eq('tipo_dado', 'calculadora').single();
-    const body = document.getElementById('sheetBody');
-    body.innerHTML = "";
-    if (data && data.conteudo) data.conteudo.forEach(rowData => addRow(rowData));
-    else for(let i=0; i<5; i++) addRow();
+    const { data } = await sb.from('dados_postos').select('conteudo').eq('user_id', currentUser.id).eq('tipo_dado', 'full_dashboard').single();
+    if(data && data.conteudo) {
+        const c = data.conteudo;
+        document.getElementById('bodyConferencia').innerHTML = '';
+        c.conferencia.forEach(row => addRow('bodyConferencia', BANDEIRAS.length, row));
+        c.sistema.forEach((v, i) => { if(document.getElementById('sist-'+i)) document.getElementById('sist-'+i).value = v; });
+        
+        document.getElementById('bodySacados').innerHTML = '';
+        c.sacados.forEach(row => addRow('bodySacados', 4, row));
+        
+        document.getElementById('bodyClientes').innerHTML = '';
+        c.clientes.forEach(row => addRow('bodyClientes', 3, row));
+        
+        calcAll();
+    } else {
+        for(let i=0; i<5; i++) addRow('bodyConferencia');
+        renderConferenciaFooter();
+    }
 }
 </script>
 </body>
